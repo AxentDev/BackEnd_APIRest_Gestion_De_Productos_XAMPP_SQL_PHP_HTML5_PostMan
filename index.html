@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API REST con PHP</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            padding: 20px;
+            color: #333;
+        }
+        h2, h3 {
+            color: #2d3e50;
+        }
+        input, button {
+            margin: 8px 0;
+            padding: 12px;
+            width: 100%;
+            max-width: 300px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #output {
+            white-space: pre-wrap;
+            background: #f4f4f4;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-width: 100%;
+            word-wrap: break-word;
+        }
+        .form-section {
+            margin-bottom: 20px;
+            text-align: center; /* Esto centrará el contenido dentro del div */
+        }
+        .section-header {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2 class="section-header">Login</h2>
+    <div class="form-section">
+        <input type="text" id="username" placeholder="Usuario">
+        <input type="password" id="password" placeholder="Contraseña">
+        <button onclick="login()">Iniciar Sesión</button>
+    </div>
+
+    <h2 class="section-header">Gestión de Productos</h2>
+    <div class="form-section">
+        <button onclick="getProducts()">Cargar Productos</button>
+    </div>
+
+    <div class="form-section">
+        <h3>Agregar Producto</h3>
+        <input type="text" id="productName" placeholder="Nombre">
+        <input type="text" id="productDescription" placeholder="Descripción">
+        <input type="number" id="productPrice" placeholder="Precio">
+        <button onclick="addProduct()">Agregar Producto</button>
+    </div>
+
+    <div class="form-section">
+        <h3>Actualizar Producto</h3>
+        <input type="number" id="updateId" placeholder="ID del Producto">
+        <input type="text" id="updateName" placeholder="Nuevo Nombre">
+        <input type="text" id="updateDescription" placeholder="Nueva Descripción">
+        <input type="number" id="updatePrice" placeholder="Nuevo Precio">
+        <button onclick="updateProduct()">Actualizar Producto</button>
+    </div>
+
+    <div class="form-section">
+        <h3>Eliminar Producto</h3>
+        <input type="number" id="deleteId" placeholder="ID del Producto">
+        <button onclick="deleteProduct()">Eliminar Producto</button>
+    </div>
+
+    <h3>Resultados</h3>
+    <pre id="output"></pre>
+
+    <script>
+        let token = "";
+
+        function login() {
+            fetch('auth.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'login', username: document.getElementById("username").value, password: document.getElementById("password").value })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.token) {
+                    token = data.token;
+                    alert("✅ Login exitoso. Token guardado.");
+                } else {
+                    alert("❌ Error en login: " + data.error);
+                }
+            });
+        }
+
+        function getProducts() {
+            fetch('products.php', {
+                method: 'GET',
+                headers: { 'Authorization': 'Bearer ' + token }
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("output").innerText = JSON.stringify(data, null, 2);
+            });
+        }
+
+        function addProduct() {
+            fetch('products.php', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: document.getElementById("productName").value,
+                    description: document.getElementById("productDescription").value,
+                    price: document.getElementById("productPrice").value
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+                getProducts();
+            });
+        }
+
+        function updateProduct() {
+            fetch('products.php', {
+                method: 'PUT',
+                headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `id=${document.getElementById("updateId").value}&name=${document.getElementById("updateName").value}&description=${document.getElementById("updateDescription").value}&price=${document.getElementById("updatePrice").value}`
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+                getProducts();
+            });
+        }
+
+        function deleteProduct() {
+            fetch('products.php', {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `id=${document.getElementById("deleteId").value}`
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+                getProducts();
+            });
+        }
+    </script>
+
+</body>
+</html>
